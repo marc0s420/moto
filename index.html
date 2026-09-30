@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Frete & Uber Moto | UNINASSAU Parangaba</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[140px] pointer-events-none"></div>
+
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-motorcycle"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white leading-tight">Express<span class="text-cyan-400">Frete</span></h1>
+                    <p class="text-xs text-slate-400">Origem: UNINASSAU Parangaba</p>
+                </div>
+            </div>
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs font-medium text-slate-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span> API ViaCEP & OpenStreetMap
+            </span>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
+        
+        <section class="lg:col-span-5 space-y-6">
+            <div class="glass-card rounded-2xl p-6 border border-slate-800/80 shadow-2xl">
+                <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-cyan-400"></i>
+                    Calcular Frete por CEP
+                </h2>
+                <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+                    Informe o CEP de destino para obter o endereço, calcular a distância em relação à <strong>UNINASSAU Parangaba</strong> e estimar o valor do Uber Moto / Entrega.
+                </p>
+
+                <form id="cepForm" class="space-y-4">
+                    <div>
+                        <label for="cepInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                            CEP de Destino
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="cepInput" placeholder="60000-000" maxlength="9" required class="w-full bg-slate-900/90 border border-slate-800 rounded-xl py-3 pl-4 pr-10 text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-500">
+                                <i class="fa-solid fa-search"></i>
+                            </div>
+                        </div>
+                        <p id="cepError" class="text-xs text-rose-400 mt-2 hidden flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <span>CEP não encontrado ou inválido.</span>
+                        </p>
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>Calcular Frete e Uber Moto</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="glass-card rounded-2xl p-5 border border-slate-800/80">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-cyan-400"></i>
+                    Ponto de Partida (Origem)
+                </h3>
+                <div class="text-sm space-y-1">
+                    <p class="font-semibold text-white">UNINASSAU - Campus Parangaba</p>
+                    <p class="text-xs text-slate-400">R. Germano Franck, 613 - Parangaba</p>
+                    <p class="text-xs text-slate-400">Fortaleza - CE, CEP 60740-020</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="lg:col-span-7">
+            
+            <div id="loadingState" class="hidden glass-card rounded-2xl p-12 border border-slate-800/80 text-center space-y-4">
+                <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mx-auto"></div>
+                <p class="text-sm font-medium text-slate-300">Consultando API do ViaCEP e Geocodificação...</p>
+            </div>
+
+            <div id="initialState" class="glass-card rounded-2xl p-12 border border-slate-800/80 text-center space-y-3">
+                <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 text-2xl mx-auto">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <h3 class="text-base font-semibold text-white">Aguardando CEP de destino</h3>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">Digite um CEP válido ao lado para visualizar a estimativa de entrega e Uber Moto.</p>
+            </div>
+
+            <div id="resultState" class="hidden space-y-6">
+                
+                <div class="glass-card rounded-2xl p-6 border border-slate-800/80 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                            <i class="fa-solid fa-map-pin"></i> Endereço Localizado
+                        </span>
+                        <span id="resCep" class="font-mono text-xs text-slate-400 bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800">00000-000</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Logradouro / Rua</p>
+                            <p id="resLogradouro" class="font-medium text-white">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Bairro</p>
+                            <p id="resBairro" class="font-medium text-white">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Cidade / UF</p>
+                            <p id="resCidadeUf" class="font-medium text-white">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase font-semibold">Distância Estimada</p>
+                            <p id="resDistancia" class="font-bold text-cyan-400 font-mono text-base">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800/80 flex flex-col justify-between space-y-4 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-motorcycle"></i> Uber Moto
+                                </span>
+                                <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">Rápido</span>
+                            </div>
+                            <p class="text-xs text-slate-400">Estimativa de corrida para passageiro/encomenda leve.</p>
+                        </div>
+                        <div>
+                            <p id="resUberMoto" class="text-3xl font-extrabold text-white font-mono">R$ 0,00</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Tarifa base + R$ 1,40/km (Aproximado)</p>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800/80 flex flex-col justify-between space-y-4 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all"></div>
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2">
+                                    <i class="fa-solid fa-box text-cyan-400"></i> Frete Convencional
+                                </span>
+                                <span class="text-[10px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-full font-semibold">Econômico</span>
+                            </div>
+                            <p class="text-xs text-slate-400">Envio de mercadorias via motoboy parceiro.</p>
+                        </div>
+                        <div>
+                            <p id="resFrete" class="text-3xl font-extrabold text-white font-mono">R$ 0,00</p>
+                            <p class="text-[11px] text-slate-500 mt-1">Taxa fixa R$ 6,00 + R$ 1,80/km</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 font-mono">
+        <div class="max-w-5xl mx-auto px-4">
+            <p>© 2026 ExpressFrete. Calculadora de frete baseada na UNINASSAU Parangaba. Projeto Fictício</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
